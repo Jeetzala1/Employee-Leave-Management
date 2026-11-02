@@ -1,0 +1,42 @@
+name: Leave Balance Validation
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-leave-balances:
+    name: Validate leave balances
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run leave-balance validation
+        shell: bash
+        run: |
+          set -o pipefail
+          python scripts/validate_leave_balance.py 2>&1 | tee validation-result.txt
+
+      - name: Add result to workflow summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Leave Balance Validation"
+            echo
+            echo '```text'
+            cat validation-result.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
